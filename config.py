@@ -24,8 +24,8 @@ class BotConfig:
     cancel_max: int = 8
 
     # ── Risk ──────────────────────────────────────────────────────────────────
-    init_dep: float = 1000.0            # Deposit (USDT)
-    risk_pct: float = 0.5               # Risk per trade (%)
+    init_dep: float = 20.0              # Deposit (USDT)
+    risk_pct: float = 1.0               # Risk per trade (%)
     leverage: int = 10
     qty_step: float = 0.001             # Minimum lot size increment
 
@@ -94,7 +94,7 @@ class BotConfig:
     trail_atr_mult: float = 1.0         # Trail stop by N × ATR from close after TP2 hit
 
     # ── P8: Daily loss circuit breaker ───────────────────────────────────────
-    daily_loss_limit_pct: float = 2.0   # Pause trading when daily loss >= this % of deposit
+    daily_loss_limit_pct: float = 10.0  # Pause trading when daily loss >= this % of deposit
     max_trades_per_day: int = 8         # Hard cap on daily trade count
 
     # ── P9: Funding rate session blackout ─────────────────────────────────────
