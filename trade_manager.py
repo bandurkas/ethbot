@@ -22,6 +22,7 @@ import pandas as pd
 from config import BotConfig, cfg as default_cfg
 from execution_engine import ExecutionEngine
 from risk_engine import round_tick, round_qty as _round_qty
+from telegram_notify import notify_trade_open, notify_partial_close, notify_trade_close
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +91,7 @@ class TradeManager:
         self._cancel_pending()
         # Cancel any active trade on opposite side (one direction at a time)
         if self.trade and self.trade.side != side:
-            self._close_trade("new_signal_opposite_side")
+            self._close_trade("new_signal_opposite_side", self.trade.entry)
 
         c_side = "buy" if side == "long" else "sell"
         tick = self.cfg.tick_size
@@ -163,6 +164,7 @@ class TradeManager:
             if stop_order:
                 self.trade.stop_order_id = stop_order["id"]
             self.pending = None
+            notify_trade_open(self.trade.side, self.trade.entry, self.trade.stop, self.trade.tp3, self.trade.qty)
             return
 
         # Check expiry
@@ -183,21 +185,21 @@ class TradeManager:
         # Stop hit? Close remaining position.
         if t.side == "long" and low <= t.stop:
             logger.info(f"LONG stopped out @ {t.stop}")
-            self._close_trade("stop_hit")
+            self._close_trade("stop_hit", t.stop)
             return
         if t.side == "short" and high >= t.stop:
             logger.info(f"SHORT stopped out @ {t.stop}")
-            self._close_trade("stop_hit")
+            self._close_trade("stop_hit", t.stop)
             return
 
         # TP3 hit → close remaining position
         if t.side == "long" and high >= t.tp3:
             logger.info(f"LONG TP3 hit @ {t.tp3}")
-            self._close_trade("tp3")
+            self._close_trade("tp3", t.tp3)
             return
         if t.side == "short" and low <= t.tp3:
             logger.info(f"SHORT TP3 hit @ {t.tp3}")
-            self._close_trade("tp3")
+            self._close_trade("tp3", t.tp3)
             return
 
         # P2: TP1 hit → partial close (25%) + move stop to BE
@@ -214,6 +216,7 @@ class TradeManager:
                     self.exec.place_market_order(close_side, close_qty)
                     t.remaining_qty = max(c.qty_step, _round_qty(t.remaining_qty - close_qty, c.qty_step))
                     logger.info(f"TP1 partial close {close_qty} @ ~{t.tp1} | remaining={t.remaining_qty}")
+                    notify_partial_close(t.side, "TP1", t.tp1, close_qty, t.entry)
 
                 # Move stop to BE on remaining position
                 old_stop = t.stop
@@ -236,6 +239,7 @@ class TradeManager:
                     self.exec.place_market_order(close_side, actual_close)
                     t.remaining_qty = max(c.qty_step, _round_qty(t.remaining_qty - actual_close, c.qty_step))
                     logger.info(f"TP2 partial close {actual_close} @ ~{t.tp2} | remaining={t.remaining_qty}")
+                    notify_partial_close(t.side, "TP2", t.tp2, actual_close, t.entry)
 
         # P7: Trailing stop after TP2
         if t.tp2_hit and c.trail_after_tp2:
@@ -265,7 +269,7 @@ class TradeManager:
 
     # ── Close trade ───────────────────────────────────────────────────────────
 
-    def _close_trade(self, reason: str) -> None:
+    def _close_trade(self, reason: str, exit_price: float = 0.0) -> None:
         t = self.trade
         if t is None:
             return
@@ -280,6 +284,7 @@ class TradeManager:
         except Exception as exc:
             logger.error(f"Market close failed: {exc}")
         logger.info(f"Trade closed — reason: {reason} | side: {t.side} | entry: {t.entry} | stop: {t.stop}")
+        notify_trade_close(t.side, t.entry, exit_price or t.entry, close_qty, reason)
         self.trade = None
 
     # ── Cancel pending ────────────────────────────────────────────────────────
