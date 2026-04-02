@@ -286,6 +286,7 @@ def main():
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--paper",     action="store_true", help="Paper trading mode")
     mode.add_argument("--live",      action="store_true", help="Live trading mode (requires API keys)")
+    parser.add_argument("--yes",       action="store_true", help="Skip live mode confirmation (for systemd/non-interactive)")
     mode.add_argument("--backtest",  action="store_true", help="Run historical backtest and exit")
     parser.add_argument("--days",       type=int,   default=180,  help="Backtest history days")
     parser.add_argument("--timeframe",  type=str,   default="15m")
@@ -312,10 +313,11 @@ def main():
     elif args.paper:
         run_live(config, paper=True)
     elif args.live:
-        confirm = input("⚠  LIVE trading mode — this will place REAL orders on HTX. Type YES to continue: ")
-        if confirm.strip().upper() != "YES":
-            print("Aborted.")
-            return
+        if not args.yes:
+            confirm = input("⚠  LIVE trading mode — this will place REAL orders on HTX. Type YES to continue: ")
+            if confirm.strip().upper() != "YES":
+                print("Aborted.")
+                return
         run_live(config, paper=False)
 
 
