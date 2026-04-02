@@ -52,7 +52,7 @@ class ExecutionEngine:
             side=side,
             amount=contracts,
             price=price,
-            params={"timeInForce": "GTC"},
+            params={"timeInForce": "GTC", "lever_rate": self.cfg.leverage, "margin_mode": "cross"},
         )
         logger.info(f"Limit order placed: {order['id']}")
         return order
@@ -66,6 +66,7 @@ class ExecutionEngine:
             type="market",
             side=side,
             amount=contracts,
+            params={"lever_rate": self.cfg.leverage, "margin_mode": "cross"},
         )
         logger.info(f"Market order placed: {order['id']}")
         return order
@@ -83,7 +84,7 @@ class ExecutionEngine:
                 type="stop",
                 side=side,
                 amount=contracts,
-                params={"stopPrice": stop_price, "triggerType": "market"},
+                params={"stopPrice": stop_price, "triggerType": "market", "lever_rate": self.cfg.leverage, "margin_mode": "cross"},
             )
             logger.info(f"Stop order placed: {order['id']}")
             return order

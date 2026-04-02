@@ -54,7 +54,8 @@ def run():
     # 4. Place market BUY (1 contract)
     print(f"\nPlacing market BUY {CONTRACTS} contract …")
     try:
-        order = exchange.create_market_order(cfg.symbol, "buy", CONTRACTS)
+        order = exchange.create_market_order(cfg.symbol, "buy", CONTRACTS,
+                                             params={"lever_rate": cfg.leverage, "margin_mode": "cross"})
         print(f"[OK] Order placed → id={order['id']} status={order['status']}")
     except Exception as e:
         print(f"[FAIL] Market buy: {e}")
@@ -78,7 +79,7 @@ def run():
     try:
         close = exchange.create_market_order(
             cfg.symbol, "sell", CONTRACTS,
-            params={"reduceOnly": True}
+            params={"reduceOnly": True, "lever_rate": cfg.leverage, "margin_mode": "cross"}
         )
         print(f"[OK] Close order → id={close['id']} status={close['status']}")
     except Exception as e:
