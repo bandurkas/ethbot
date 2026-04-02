@@ -5,14 +5,14 @@ from dataclasses import dataclass, field
 class BotConfig:
     # ── Exchange ──────────────────────────────────────────────────────────────
     symbol: str = "ETH/USDT:USDT"       # CCXT unified symbol (perpetual swap)
-    timeframe: str = "15m"              # Primary timeframe
-    ohlcv_limit: int = 300              # Bars to fetch each cycle
+    timeframe: str = "5m"               # Primary timeframe (5m = 288 bars/day vs 15m = 96)
+    ohlcv_limit: int = 500              # Bars to fetch each cycle
 
     # ── Entry ─────────────────────────────────────────────────────────────────
     entry_mode: str = "retest"          # "retest" | "bar_close"
     setups_opt: str = "All"             # "All" | "Sweep&Reversal" | "VWAP Mean Revert" | "Momentum Pullback"
     side_filter: str = "Both"           # "Both" | "Long only" | "Short only"
-    cancel_bars: int = 3                # Static pending order lifetime (bars)
+    cancel_bars: int = 5                # Static pending order lifetime (bars)
     limit_offset_ticks: int = 0         # Limit price offset (ticks) from retest level
     close_only: bool = True             # Only fire signals on confirmed (closed) bars
 
@@ -51,7 +51,7 @@ class BotConfig:
     dev_len: int = 100                  # VWAP stdev window
     sigma_k: float = 1.0               # VWAP band width (sigmas)
     vol_mult: float = 1.5              # Volume multiplier for sweep detection
-    sweep_len: int = 20                 # Lookback bars for range high/low
+    sweep_len: int = 15                 # Lookback bars for range high/low
     min_dev_pct_vw: float = 0.15       # Min deviation from VWAP (%) for VMR
 
     # ── Scoring weights ───────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ class BotConfig:
     w_vol: int = 15
     w_vwap: int = 10
     w_ema: int = 10
-    auto_trade_threshold: int = 55
+    auto_trade_threshold: int = 45
 
     # ── P1: Scoring — confluence bonus ────────────────────────────────────────
     w_confluence: int = 20              # Bonus when 2+ setups fire on the same bar
@@ -72,22 +72,22 @@ class BotConfig:
 
     # ── P3: Higher-timeframe (HTF) trend filter ───────────────────────────────
     htf_filter: bool = True
-    htf_timeframe: str = "1h"
+    htf_timeframe: str = "15m"
     htf_ema_fast_len: int = 20
     htf_ema_slow_len: int = 50
 
     # ── P4: ATR volatility regime gate ────────────────────────────────────────
     vol_gate_enabled: bool = True
-    min_atr_pct: float = 0.10           # Skip signals when ATR/close < this (dead market)
-    max_atr_pct: float = 0.80           # Skip signals when ATR/close > this (news/cascade)
+    min_atr_pct: float = 0.05           # Skip signals when ATR/close < this (dead market)
+    max_atr_pct: float = 1.50           # Skip signals when ATR/close > this (news/cascade)
 
     # ── P5: Sweep depth quality filter ───────────────────────────────────────
     sweep_depth_filter: bool = True
-    min_sweep_depth_atr: float = 0.30   # Sweep must extend >= 0.3 × ATR beyond range
+    min_sweep_depth_atr: float = 0.15   # Sweep must extend >= 0.15 × ATR beyond range
 
     # ── P6: EMA spread anti-chop filter ──────────────────────────────────────
     chop_filter_enabled: bool = True
-    min_ema_spread_pct: float = 0.05    # |(ema_fast - ema_slow)| / close must exceed this
+    min_ema_spread_pct: float = 0.02    # |(ema_fast - ema_slow)| / close must exceed this
 
     # ── P7: ATR trailing stop after TP2 ──────────────────────────────────────
     trail_after_tp2: bool = True
