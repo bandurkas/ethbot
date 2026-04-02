@@ -25,10 +25,16 @@ class ExecutionEngine:
       back to software stop monitoring.
     """
 
+    CONTRACT_SIZE = 0.01  # 1 HTX contract = 0.01 ETH
+
     def __init__(self, exchange: ccxt.htx, config: BotConfig = default_cfg):
         self.exchange = exchange
         self.cfg = config
         self.symbol = config.symbol
+
+    def _contracts(self, qty_eth: float) -> int:
+        """Convert ETH qty → whole contracts (min 1). HTX requires integer contracts."""
+        return max(1, round(qty_eth / self.CONTRACT_SIZE))
 
     # ── Order placement ───────────────────────────────────────────────────────
 
@@ -38,12 +44,13 @@ class ExecutionEngine:
         side: "buy" | "sell"
         Returns the raw ccxt order dict.
         """
-        logger.info(f"Placing limit {side} {qty} @ {price}")
+        contracts = self._contracts(qty)
+        logger.info(f"Placing limit {side} {contracts} contracts ({qty} ETH) @ {price}")
         order = self.exchange.create_order(
             symbol=self.symbol,
             type="limit",
             side=side,
-            amount=qty,
+            amount=contracts,
             price=price,
             params={"timeInForce": "GTC"},
         )
@@ -52,12 +59,13 @@ class ExecutionEngine:
 
     def place_market_order(self, side: str, qty: float) -> dict:
         """Place a market order (used for immediate entry or emergency close)."""
-        logger.info(f"Placing market {side} {qty}")
+        contracts = self._contracts(qty)
+        logger.info(f"Placing market {side} {contracts} contracts ({qty} ETH)")
         order = self.exchange.create_order(
             symbol=self.symbol,
             type="market",
             side=side,
-            amount=qty,
+            amount=contracts,
         )
         logger.info(f"Market order placed: {order['id']}")
         return order
@@ -68,12 +76,13 @@ class ExecutionEngine:
         Returns None if not supported; trade_manager will monitor in software.
         """
         try:
-            logger.info(f"Placing stop-market {side} {qty} trigger @ {stop_price}")
+            contracts = self._contracts(qty)
+            logger.info(f"Placing stop-market {side} {contracts} contracts trigger @ {stop_price}")
             order = self.exchange.create_order(
                 symbol=self.symbol,
                 type="stop",
                 side=side,
-                amount=qty,
+                amount=contracts,
                 params={"stopPrice": stop_price, "triggerType": "market"},
             )
             logger.info(f"Stop order placed: {order['id']}")

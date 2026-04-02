@@ -27,7 +27,7 @@ class BotConfig:
     init_dep: float = 20.0              # Deposit (USDT)
     risk_pct: float = 1.0               # Risk per trade (%)
     leverage: int = 10
-    qty_step: float = 0.001             # Minimum lot size increment
+    qty_step: float = 0.01              # Minimum lot size increment (1 HTX contract = 0.01 ETH)
 
     # ── Stop ─────────────────────────────────────────────────────────────────
     sl_mode: str = "Hybrid"             # "ATR" | "Swing" | "Hybrid"

@@ -15,7 +15,8 @@ load_dotenv()
 from market_data import make_exchange
 from config import cfg
 
-MIN_QTY = 0.001  # HTX minimum lot size
+MIN_QTY   = 0.01   # 1 HTX contract = 0.01 ETH (absolute minimum)
+CONTRACTS = 1      # Place exactly 1 contract
 
 
 def run():
@@ -48,12 +49,12 @@ def run():
     print(f"[OK] ETH price: ${price:.2f}")
 
     notional = MIN_QTY * price / cfg.leverage
-    print(f"[INFO] Test order: {MIN_QTY} ETH | Notional: ${MIN_QTY * price:.2f} | Margin: ~${notional:.2f}")
+    print(f"[INFO] Test order: {CONTRACTS} contract ({MIN_QTY} ETH) | Notional: ${MIN_QTY * price:.2f} | Margin: ~${notional:.2f}")
 
-    # 4. Place market BUY
-    print("\nPlacing market BUY 0.001 ETH …")
+    # 4. Place market BUY (1 contract)
+    print(f"\nPlacing market BUY {CONTRACTS} contract …")
     try:
-        order = exchange.create_market_order(cfg.symbol, "buy", MIN_QTY)
+        order = exchange.create_market_order(cfg.symbol, "buy", CONTRACTS)
         print(f"[OK] Order placed → id={order['id']} status={order['status']}")
     except Exception as e:
         print(f"[FAIL] Market buy: {e}")
@@ -72,11 +73,11 @@ def run():
     except Exception as e:
         print(f"[WARN] Position fetch: {e}")
 
-    # 6. Close position — market SELL
-    print("\nClosing position with market SELL 0.001 ETH …")
+    # 6. Close position — market SELL (1 contract, reduceOnly)
+    print(f"\nClosing position with market SELL {CONTRACTS} contract …")
     try:
         close = exchange.create_market_order(
-            cfg.symbol, "sell", MIN_QTY,
+            cfg.symbol, "sell", CONTRACTS,
             params={"reduceOnly": True}
         )
         print(f"[OK] Close order → id={close['id']} status={close['status']}")
