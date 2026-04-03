@@ -50,9 +50,9 @@ class BotConfig:
     ema_slow_len: int = 50
     dev_len: int = 100                  # VWAP stdev window
     sigma_k: float = 1.0               # VWAP band width (sigmas)
-    vol_mult: float = 1.5              # Volume multiplier for sweep detection
+    vol_mult: float = 1.3              # Volume multiplier for sweep detection
     sweep_len: int = 15                 # Lookback bars for range high/low
-    min_dev_pct_vw: float = 0.15       # Min deviation from VWAP (%) for VMR
+    min_dev_pct_vw: float = 0.08       # Min deviation from VWAP (%) for VMR
 
     # ── Scoring weights ───────────────────────────────────────────────────────
     w_sweep: int = 40
@@ -83,7 +83,7 @@ class BotConfig:
 
     # ── P5: Sweep depth quality filter ───────────────────────────────────────
     sweep_depth_filter: bool = True
-    min_sweep_depth_atr: float = 0.15   # Sweep must extend >= 0.15 × ATR beyond range
+    min_sweep_depth_atr: float = 0.10   # Sweep must extend >= 0.10 × ATR beyond range
 
     # ── P6: EMA spread anti-chop filter ──────────────────────────────────────
     chop_filter_enabled: bool = True
@@ -99,7 +99,7 @@ class BotConfig:
 
     # ── P9: Funding rate session blackout ─────────────────────────────────────
     funding_blackout_enabled: bool = True
-    funding_blackout_mins: int = 15     # Silence signals N minutes around funding (0,8,16 UTC)
+    funding_blackout_mins: int = 8      # Silence signals N minutes around funding (0,8,16 UTC)
 
     # ── Commission (for P&L simulation) ──────────────────────────────────────
     maker_fee_pct: float = 0.02         # 0.02%
