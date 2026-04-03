@@ -35,7 +35,7 @@ from paper_trader import PaperExecutionEngine
 from backtest import run_backtest
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
     handlers=[
         logging.StreamHandler(),
@@ -43,7 +43,12 @@ logging.basicConfig(
     ],
     force=True,   # override any basicConfig set by imported modules (e.g. backtest.py)
 )
+# Silence noisy third-party loggers
+logging.getLogger("ccxt").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
+logging.getLogger("requests").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)  # our code at DEBUG, everything else at INFO/WARNING
 
 
 # ── P9: Funding rate blackout ─────────────────────────────────────────────────
