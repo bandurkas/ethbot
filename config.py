@@ -50,7 +50,7 @@ class BotConfig:
     ema_slow_len: int = 50
     dev_len: int = 100                  # VWAP stdev window
     sigma_k: float = 1.0               # VWAP band width (sigmas)
-    vol_mult: float = 1.3              # Volume multiplier for sweep detection
+    vol_mult: float = 1.0              # Volume multiplier for sweep detection
     sweep_len: int = 15                 # Lookback bars for range high/low
     min_dev_pct_vw: float = 0.08       # Min deviation from VWAP (%) for VMR
 
