@@ -72,6 +72,10 @@ class TradeManager:
         self.cfg = config
         self.pending: Optional[PendingOrder] = None
         self.trade: Optional[ActiveTrade] = None
+        # Fill rate tracking
+        self._pending_placed: int = 0
+        self._pending_filled: int = 0
+        self._pending_expired: int = 0
 
     # ── Public: place a new pending limit order ───────────────────────────────
 
@@ -116,7 +120,8 @@ class TradeManager:
         self.pending._tp2  = tp2           # type: ignore[attr-defined]
         self.pending._tp3  = tp3           # type: ignore[attr-defined]
         self.pending._qty  = qty           # type: ignore[attr-defined]
-        logger.info(f"Pending {side} @ {limit_price} | expiry bar {expiry_bar}")
+        self._pending_placed += 1
+        logger.info(f"Pending {side} @ {limit_price} | expiry bar {expiry_bar} | placed={self._pending_placed} filled={self._pending_filled} expired={self._pending_expired}")
 
     # ── Public: bar update ────────────────────────────────────────────────────
 
@@ -146,7 +151,9 @@ class TradeManager:
             filled = True
 
         if filled:
-            logger.info(f"Pending {p.side} filled @ {p.retest_level}")
+            self._pending_filled += 1
+            fill_rate = self._pending_filled / self._pending_placed * 100 if self._pending_placed else 0
+            logger.info(f"Pending {p.side} filled @ {p.retest_level} | fill_rate={fill_rate:.0f}% ({self._pending_filled}/{self._pending_placed})")
             self.trade = ActiveTrade(
                 side=p.side,
                 entry=p.retest_level,
@@ -169,7 +176,9 @@ class TradeManager:
 
         # Check expiry
         if bar_index > p.expiry_bar:
-            logger.info(f"Pending {p.side} expired at bar {bar_index}")
+            self._pending_expired += 1
+            fill_rate = self._pending_filled / self._pending_placed * 100 if self._pending_placed else 0
+            logger.info(f"Pending {p.side} expired at bar {bar_index} | fill_rate={fill_rate:.0f}% ({self._pending_filled}/{self._pending_placed})")
             self._cancel_pending()
 
     # ── Active trade handling ─────────────────────────────────────────────────

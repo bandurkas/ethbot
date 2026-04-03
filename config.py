@@ -41,7 +41,7 @@ class BotConfig:
     stop_cap_atr_mult: float = 2.5      # Max stop distance (× ATR)
 
     # ── Take profit ───────────────────────────────────────────────────────────
-    r_tp1: float = 0.8                  # TP1 in R multiples
+    r_tp1: float = 1.3                  # TP1 in R multiples
     r_tp2: float = 1.8
     r_tp3: float = 3.0
 
@@ -50,7 +50,7 @@ class BotConfig:
     ema_slow_len: int = 50
     dev_len: int = 100                  # VWAP stdev window
     sigma_k: float = 1.0               # VWAP band width (sigmas)
-    vol_mult: float = 1.0              # Volume multiplier for sweep detection
+    vol_mult: float = 0.8              # Volume multiplier for sweep detection
     sweep_len: int = 15                 # Lookback bars for range high/low
     min_dev_pct_vw: float = 0.08       # Min deviation from VWAP (%) for VMR
 
