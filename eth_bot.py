@@ -268,10 +268,23 @@ def run_live(config: BotConfig, paper: bool = False) -> None:
             else:
                 bal = exec_engine.get_balance()
                 row = df.iloc[-1]
+                atr_pct = float(row['atr']) / float(row['close']) * 100
+                ema_spread_pct = abs(float(row['ema_fast']) - float(row['ema_slow'])) / float(row['close']) * 100
                 logger.info(
                     f"[LIVE] Balance=${bal:.2f} | ETH=${float(row['close']):.2f} | "
-                    f"ATR%={float(row['atr'])/float(row['close'])*100:.3f}% | "
-                    f"EMAspread%={abs(float(row['ema_fast'])-float(row['ema_slow']))/float(row['close'])*100:.3f}%"
+                    f"ATR%={atr_pct:.3f}% | EMAspread%={ema_spread_pct:.3f}%"
+                )
+                # Setup diagnostics — show what's firing/blocking each bar
+                logger.info(
+                    f"[DIAG] sweep_l={bool(row.get('long_sweep',False))} "
+                    f"sweep_s={bool(row.get('short_sweep',False))} "
+                    f"vmr_l={bool(row.get('long_vmr',False))} "
+                    f"vmr_s={bool(row.get('short_vmr',False))} "
+                    f"mom_l={bool(row.get('long_mom',False))} "
+                    f"mom_s={bool(row.get('short_mom',False))} "
+                    f"vol_ok={bool(row.get('vol_ok',False))} "
+                    f"htf_l={bool(row.get('htf_trend_long',True))} "
+                    f"htf_s={bool(row.get('htf_trend_short',True))}"
                 )
 
             bar_index += 1
