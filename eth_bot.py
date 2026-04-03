@@ -35,7 +35,7 @@ from paper_trader import PaperExecutionEngine
 from backtest import run_backtest
 
 logging.basicConfig(
-    level=logging.WARNING,
+    level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
     handlers=[
         logging.StreamHandler(),
@@ -43,8 +43,10 @@ logging.basicConfig(
     ],
     force=True,
 )
+# Silence noisy third-party HTTP loggers
+for _lib in ("ccxt", "urllib3", "requests", "asyncio"):
+    logging.getLogger(_lib).setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)   # only our module logs at INFO+
 
 
 # ── P9: Funding rate blackout ─────────────────────────────────────────────────
@@ -114,21 +116,8 @@ def process_signals(
     row      = df.iloc[-1]
     prev_row = df.iloc[-2]
 
-    # Diagnostic: log key filter values every bar
-    atr_pct = float(row["atr"]) / float(row["close"]) * 100 if float(row["close"]) else 0
-    ema_spread_pct = abs(float(row["ema_fast"]) - float(row["ema_slow"])) / float(row["close"]) * 100
-    htf_long  = bool(row.get("htf_trend_long",  True))
-    htf_short = bool(row.get("htf_trend_short", True))
-    logger.debug(
-        f"Filters — ATR%={atr_pct:.3f} EMAsprd%={ema_spread_pct:.3f} "
-        f"HTF_L={htf_long} HTF_S={htf_short} "
-        f"volOK={bool(row['volume'] > row['vol_sma'] * config.vol_mult)}"
-    )
-
     signals = get_signals(row, prev_row, config)
 
-    if not signals:
-        logger.debug("No setups triggered this bar")
     for sig in signals:
         if not sig.auto_trade:
             logger.info(f"Signal {sig.side} setup={sig.setup} score={sig.score:.0f} — below threshold ({config.auto_trade_threshold}), skipped")
