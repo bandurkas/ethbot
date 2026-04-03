@@ -87,7 +87,7 @@ class BotConfig:
 
     # ── P6: EMA spread anti-chop filter ──────────────────────────────────────
     chop_filter_enabled: bool = True
-    min_ema_spread_pct: float = 0.02    # |(ema_fast - ema_slow)| / close must exceed this
+    min_ema_spread_pct: float = 0.005   # |(ema_fast - ema_slow)| / close must exceed this
 
     # ── P7: ATR trailing stop after TP2 ──────────────────────────────────────
     trail_after_tp2: bool = True
