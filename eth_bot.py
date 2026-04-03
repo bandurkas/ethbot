@@ -35,7 +35,7 @@ from paper_trader import PaperExecutionEngine
 from backtest import run_backtest
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s %(levelname)s %(message)s",
     handlers=[
         logging.StreamHandler(),
@@ -113,11 +113,24 @@ def process_signals(
     row      = df.iloc[-1]
     prev_row = df.iloc[-2]
 
+    # Diagnostic: log key filter values every bar
+    atr_pct = float(row["atr"]) / float(row["close"]) * 100 if float(row["close"]) else 0
+    ema_spread_pct = abs(float(row["ema_fast"]) - float(row["ema_slow"])) / float(row["close"]) * 100
+    htf_long  = bool(row.get("htf_trend_long",  True))
+    htf_short = bool(row.get("htf_trend_short", True))
+    logger.debug(
+        f"Filters — ATR%={atr_pct:.3f} EMAsprd%={ema_spread_pct:.3f} "
+        f"HTF_L={htf_long} HTF_S={htf_short} "
+        f"volOK={bool(row['volume'] > row['vol_sma'] * config.vol_mult)}"
+    )
+
     signals = get_signals(row, prev_row, config)
 
+    if not signals:
+        logger.debug("No setups triggered this bar")
     for sig in signals:
         if not sig.auto_trade:
-            logger.info(f"Signal {sig.side} setup={sig.setup} score={sig.score:.0f} — below threshold, skipped")
+            logger.info(f"Signal {sig.side} setup={sig.setup} score={sig.score:.0f} — below threshold ({config.auto_trade_threshold}), skipped")
             continue
 
         tick  = config.tick_size
@@ -262,6 +275,14 @@ def run_live(config: BotConfig, paper: bool = False) -> None:
                     f"Trades={summary.get('trades', 0)} | WR={summary.get('win_rate', 0)}% | "
                     f"DailyLoss=${exec_engine.daily_loss():.2f}"  # type: ignore[union-attr]
                 )
+            else:
+                bal = exec_engine.get_balance()
+                row = df.iloc[-1]
+                logger.info(
+                    f"[LIVE] Balance=${bal:.2f} | ETH=${float(row['close']):.2f} | "
+                    f"ATR%={float(row['atr'])/float(row['close'])*100:.3f}% | "
+                    f"EMAspread%={abs(float(row['ema_fast'])-float(row['ema_slow']))/float(row['close'])*100:.3f}%"
+                )
 
             bar_index += 1
 
@@ -288,21 +309,26 @@ def main():
     mode.add_argument("--live",      action="store_true", help="Live trading mode (requires API keys)")
     parser.add_argument("--yes",       action="store_true", help="Skip live mode confirmation (for systemd/non-interactive)")
     mode.add_argument("--backtest",  action="store_true", help="Run historical backtest and exit")
-    parser.add_argument("--days",       type=int,   default=180,  help="Backtest history days")
-    parser.add_argument("--timeframe",  type=str,   default="15m")
-    parser.add_argument("--risk",       type=float, default=0.5,  help="Risk per trade %%")
-    parser.add_argument("--leverage",   type=int,   default=10)
-    parser.add_argument("--deposit",    type=float, default=1000.0)
-    parser.add_argument("--threshold",  type=int,   default=55,   help="Auto-trade score threshold")
+    parser.add_argument("--days",       type=int,   default=180,   help="Backtest history days")
+    parser.add_argument("--timeframe",  type=str,   default=None,  help="Override timeframe (default: from config.py)")
+    parser.add_argument("--risk",       type=float, default=None,  help="Override risk per trade %%")
+    parser.add_argument("--leverage",   type=int,   default=None)
+    parser.add_argument("--deposit",    type=float, default=None)
+    parser.add_argument("--threshold",  type=int,   default=None,  help="Override auto-trade score threshold")
     args = parser.parse_args()
 
-    config = BotConfig(
-        timeframe=args.timeframe,
-        risk_pct=args.risk,
-        leverage=args.leverage,
-        init_dep=args.deposit,
-        auto_trade_threshold=args.threshold,
-    )
+    # Build config from config.py defaults; only override if explicitly passed on CLI
+    config = BotConfig()
+    if args.timeframe is not None:
+        config.timeframe = args.timeframe
+    if args.risk is not None:
+        config.risk_pct = args.risk
+    if args.leverage is not None:
+        config.leverage = args.leverage
+    if args.deposit is not None:
+        config.init_dep = args.deposit
+    if args.threshold is not None:
+        config.auto_trade_threshold = args.threshold
 
     if args.backtest:
         results = run_backtest(config, days=args.days)
