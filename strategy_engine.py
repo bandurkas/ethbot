@@ -97,9 +97,9 @@ def detect_setups_df(df: pd.DataFrame, config: BotConfig = default_cfg) -> pd.Da
         htf_long_ok  = pd.Series(True, index=df.index)
         htf_short_ok = pd.Series(True, index=df.index)
 
-    # Sweep & Reversal
-    long_sweep_raw  = (df["low"] < df["prev_low"]) & (df["close"] > df["prev_low"]) & vol_ok
-    short_sweep_raw = (df["high"] > df["prev_high"]) & (df["close"] < df["prev_high"]) & vol_ok
+    # Sweep & Reversal (vol_ok is a scoring bonus only, not required)
+    long_sweep_raw  = (df["low"] < df["prev_low"]) & (df["close"] > df["prev_low"])
+    short_sweep_raw = (df["high"] > df["prev_high"]) & (df["close"] < df["prev_high"])
 
     # P5: Sweep depth quality filter
     if c.sweep_depth_filter and "atr" in df.columns:
@@ -187,9 +187,9 @@ def detect_setups_row(row: pd.Series, prev_row: pd.Series, config: BotConfig = d
     flags.htf_trend_long  = bool(row.get("htf_trend_long",  True)) if c.htf_filter else True
     flags.htf_trend_short = bool(row.get("htf_trend_short", True)) if c.htf_filter else True
 
-    # Sweep base conditions
-    long_sweep_base  = (row["low"] < row["prev_low"])  and (row["close"] > row["prev_low"])  and flags.vol_ok
-    short_sweep_base = (row["high"] > row["prev_high"]) and (row["close"] < row["prev_high"]) and flags.vol_ok
+    # Sweep base conditions (vol_ok is a scoring bonus only, not required)
+    long_sweep_base  = (row["low"] < row["prev_low"])  and (row["close"] > row["prev_low"])
+    short_sweep_base = (row["high"] > row["prev_high"]) and (row["close"] < row["prev_high"])
 
     # P5: Sweep depth quality filter
     if c.sweep_depth_filter and atr_val > 0:
